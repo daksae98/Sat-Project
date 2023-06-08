@@ -92,9 +92,11 @@ def eval(epoch):
 
                 if epoch == epochs:
                     for i, pred_image in enumerate(pred_images):
+                        pred_image = np.array(pred_image,dtype=np.uint8)
                         pred_image = Image.fromarray(pred_image)
                         pred_image.save(f'res/{epoch}_{batch_idx}_{i}_pred_{score_round}.png')
                     for i, true_image in enumerate(true_images):
+                        true_image = np.array(true_image,dtype=np.uint8)
                         true_image = Image.fromarray(true_image)
                         true_image.save(f'res/{epoch}_{batch_idx}_{i}_true_{score_round}.png')
                 else:
@@ -129,7 +131,7 @@ gradient_clipping: float = 1.0,
 
 if __name__ == '__main__':
     
-    epochs = 200
+    epochs = 400
 
     net = UNet(n_channels=5,n_classes=7,bilinear=False)
     net = net.to(memory_format=torch.channels_last) # beta
@@ -141,7 +143,7 @@ if __name__ == '__main__':
 
     train_npys = [TRAIN_DIR + path for path in os.listdir(TRAIN_DIR)]
     test_npys = [VALID_DIR + path for path in os.listdir(VALID_DIR)]
-    train_dataloader, test_dataloader = get_train_test_dataloader(train_npys,test_npys, test_size=0.2)
+    train_dataloader, test_dataloader = get_train_test_dataloader(train_npys,test_npys)
     
     optimizer = optim.RMSprop(net.parameters(), lr=1e-5, weight_decay=1e-8,momentum=0.999,foreach=True)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=5)
