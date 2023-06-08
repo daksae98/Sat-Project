@@ -1,5 +1,5 @@
 import time
-import sys
+import os
 
 import torch
 import torch.nn as nn
@@ -15,7 +15,10 @@ from custom_dataloader import get_train_test_dataloader
 from utils.dice_score import dice_loss,multiclass_dice_coeff,dice_coeff
 from PIL import Image
 
-npys = ['npys/Anndong_32.npy','npys/Donghae_8.npy','npys/Sokcho_8.npy','npys/Uljin1_8.npy','npys/Uljin3_24.npy']
+###
+TRAIN_DIR = 'npys/train/'
+VALID_DIR = 'npys/valid/'
+###
 
 def train(epoch):
     net.train()
@@ -70,26 +73,38 @@ def eval(epoch):
             # convert to one-hot format
             true_mask = F.one_hot(true_mask, net.n_classes).permute(0,3,1,2).float()
             mask_pred = F.one_hot(mask_pred.argmax(dim=1), net.n_classes).permute(0,3,1,2).float()
-            mask_pred_cpu = mask_pred.cpu()
+            
             
             #compute the Dice score, ignoring background
             dice_score += multiclass_dice_coeff(mask_pred[:,1:], true_mask[:,1:], reduce_batch_first=False)
             score = dice_score / max(num_val_batches,1)
             
             idx = 12
-            if epoch % 10 == 0:
+            if epoch % 50 == 0:
                 score_cpu = score.cpu()
                 score_cpu = np.array(score_cpu)
                 score_round = int(round(score_cpu*1000,0))
+                
+                mask_pred_cpu = mask_pred.cpu()
                 pred_images = np.argmax(mask_pred_cpu, axis=1)
-                pred_image = np.array(pred_images[idx],dtype=np.uint8)
-                pred_image = Image.fromarray(pred_image)
-                pred_image.save(f'res/{epoch}_{batch_idx}_{idx}_pred_{score_round}.png')
                 true_mask_cpu = true_mask.cpu()
                 true_images = np.argmax(true_mask_cpu, axis=1)
-                true_image = np.array(true_images[idx],dtype=np.uint8)
-                true_image = Image.fromarray(true_image)
-                true_image.save(f'res/{epoch}_{batch_idx}_{idx}_true_{score_round}.png')
+
+                if epoch == epochs:
+                    for i, pred_image in enumerate(pred_images):
+                        pred_image = Image.fromarray(pred_image)
+                        pred_image.save(f'res/{epoch}_{batch_idx}_{i}_pred_{score_round}.png')
+                    for i, true_image in enumerate(true_images):
+                        true_image = Image.fromarray(true_image)
+                        true_image.save(f'res/{epoch}_{batch_idx}_{i}_true_{score_round}.png')
+                else:
+                    pred_image = np.array(pred_images[idx],dtype=np.uint8)
+                    pred_image = Image.fromarray(pred_image)
+                    pred_image.save(f'res/{epoch}_{batch_idx}_{idx}_pred_{score_round}.png')
+                    
+                    true_image = np.array(true_images[idx],dtype=np.uint8)
+                    true_image = Image.fromarray(true_image)
+                    true_image.save(f'res/{epoch}_{batch_idx}_{idx}_true_{score_round}.png')
            
            
             
@@ -120,12 +135,13 @@ if __name__ == '__main__':
     net = net.to(memory_format=torch.channels_last) # beta
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # if torch.backends.mps.is_available():
-    #     mps_device = torch.device("mps")
-    #     net.to(mps_device)
+    
     net.to(device)
     oss_function = nn.CrossEntropyLoss()
-    train_dataloader, test_dataloader = get_train_test_dataloader(npys, test_size=0.2)
+
+    train_npys = [TRAIN_DIR + path for path in os.listdir(TRAIN_DIR)]
+    test_npys = [VALID_DIR + path for path in os.listdir(VALID_DIR)]
+    train_dataloader, test_dataloader = get_train_test_dataloader(train_npys,test_npys, test_size=0.2)
     
     optimizer = optim.RMSprop(net.parameters(), lr=1e-5, weight_decay=1e-8,momentum=0.999,foreach=True)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=5)

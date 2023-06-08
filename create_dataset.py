@@ -8,7 +8,7 @@ import math
 # DNBR Label, DNBR 영상을 만든다
 # 128 * 128로 나눈다.
 
-REGION = 'Uljin3'
+REGION = 'Uljin1'
 
 BANDS = [
     "B2_BLUE",
@@ -70,7 +70,7 @@ def load_images(region):
     prev = []
     post = []
     for path in prev_paths:
-        print(path)
+        # print(path)
         img_ds = gdal.Open(path)
         img = img_ds.ReadAsArray()
         img_arr = np.array(img)
@@ -169,7 +169,7 @@ def crop_128(region):
         for c in range(ic):
             crop = npy[:, r*128:(r+1)*128, c*128:(c+1)*128]
             res.append(crop)
-            print(count1, np.array(crop).shape)
+            # print(count1, np.array(crop).shape)
             count1 += 1
     # 좌 하단
     count1 = 0
@@ -177,7 +177,7 @@ def crop_128(region):
         for c in range(ic):
             crop = npy[:, row - (r+1)*128:row - (r)*128, c*128:(c+1)*128]
             res.append(crop)
-            print(count1, np.array(crop).shape)
+            # print(count1, np.array(crop).shape)
             count1 += 1
     # 우상단
     count1 = 0
@@ -185,7 +185,7 @@ def crop_128(region):
         for c in range(ic):
             crop = npy[:, r*128:(r+1)*128, col-(c+1)*128:col-c*128]
             res.append(crop)
-            print(count1, np.array(crop).shape)
+            # print(count1, np.array(crop).shape)
             count1 += 1
     # 우하단
     count1 = 0
@@ -194,22 +194,21 @@ def crop_128(region):
             crop = npy[:, row - (r+1)*128:row - (r)*128,
                        col-(c+1)*128:col-c*128]
             res.append(crop)
-            print(count1, np.array(crop).shape)
+            # print(count1, np.array(crop).shape)
             count1 += 1
 
     res = np.array(res)
-    print(res.shape)
     np.save(f'npys/{region}_{res.shape[0]}', res)
 
 
 if __name__ == '__main__':
-    # img = load_image('Datasets/Anndong/Anndong_dNBR_label.tif')
-    # plot_image(img)
-    prev, post = load_images(REGION)
-    cal_dNBR(prev, post, REGION)
-    label_dNBR(REGION)
-    merge_imgs(REGION)
-    crop_128(REGION)
+    img = load_image('Datasets/Uljin1/Uljin1_dNBR_label.tif')
+    plot_image(img)
+    # prev, post = load_images(REGION)
+    # cal_dNBR(prev, post, REGION)
+    # label_dNBR(REGION)
+    # merge_imgs(REGION)
+    # crop_128(REGION)
     '''
     npy = np.load('npys/Donghae_8.npy')
     fig, axs = plt.subplots(4, 2)

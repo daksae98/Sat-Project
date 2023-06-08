@@ -53,20 +53,24 @@ class ToTensor(object):
 
 
 #(80, 6, 128, 128)
-def get_train_test_dataloader(npys,test_size = 0.2):
-    # npys = ['npys/Anndong_32.npy','npys/Donghae_8.npy','npys/Sokcho_8.npy','npys/Uljin1_8.npy','npys/Uljin3_24.npy']
-    data = []
-    for npy in npys:
+def get_train_test_dataloader(train_npys,test_npys):
+    '''데이터 자체를 중복되게 잘랐기 때문에, random_split 했을때, train과 test간 겹치는게 존재함. 따라서 sokcho랑 donghae를 validation set으로 사용.'''
+    
+    train_data = []
+    for npy in train_npys:
         item = np.load(npy)
         item = item.tolist()
-        data = data + item      
-    data = np.array(data)
+        train_data = train_data + item      
+    train_data = np.array(train_data)
 
-    # test train split
-    data_count = len(data)
-    test_count = int(test_size*data_count)
-    train_count = data_count - test_count
-    train_data, test_data = random_split(data,[train_count,test_count])
+    test_data = []
+    for npy in test_npys:
+        item = np.load(npy)
+        item = item.tolist()
+        test_data = test_data + item      
+    test_data = np.array(test_data)
+    
+
     # transform train
     transform_train = WildFireDataset(train_data,transform=transforms.Compose([
         ToTensor()
