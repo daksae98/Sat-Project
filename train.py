@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
+import math
 
 
 # from resnet import resnet18
@@ -64,34 +65,38 @@ def eval(epoch):
             true_mask = true_mask.to(device=device, dtype=torch.long)
 
             mask_pred = net(image)
-           
-        #    pred_image = Image.fromarray(mask_pred)
-        #    pred_image.save(f'res/{epoch}_{batch_idx}_dNBR.tif')
+
             assert true_mask.min() >= 0 and true_mask.max() < net.n_classes, 'True mask indices should be in [0,n_classes]'
-           # convert to one-hot format
+            # convert to one-hot format
             true_mask = F.one_hot(true_mask, net.n_classes).permute(0,3,1,2).float()
             mask_pred = F.one_hot(mask_pred.argmax(dim=1), net.n_classes).permute(0,3,1,2).float()
             mask_pred_cpu = mask_pred.cpu()
             
-            idx = 8
+            #compute the Dice score, ignoring background
+            dice_score += multiclass_dice_coeff(mask_pred[:,1:], true_mask[:,1:], reduce_batch_first=False)
+            score = dice_score / max(num_val_batches,1)
+            
+            idx = 12
             if epoch % 10 == 0:
+                score_cpu = score.cpu()
+                score_cpu = np.array(score_cpu)
+                score_round = int(round(score_cpu*1000,0))
                 pred_images = np.argmax(mask_pred_cpu, axis=1)
                 pred_image = np.array(pred_images[idx],dtype=np.uint8)
                 pred_image = Image.fromarray(pred_image)
-                pred_image.save(f'res/{epoch}_{batch_idx}_{idx}_pred.png')
+                pred_image.save(f'res/{epoch}_{batch_idx}_{idx}_pred_{score_round}.png')
                 true_mask_cpu = true_mask.cpu()
                 true_images = np.argmax(true_mask_cpu, axis=1)
                 true_image = np.array(true_images[idx],dtype=np.uint8)
                 true_image = Image.fromarray(true_image)
-                true_image.save(f'res/{epoch}_{batch_idx}_{idx}_true.png')
+                true_image.save(f'res/{epoch}_{batch_idx}_{idx}_true_{score_round}.png')
            
            
-           #compute the Dice score, ignoring background
-            dice_score += multiclass_dice_coeff(mask_pred[:,1:], true_mask[:,1:], reduce_batch_first=False)
+            
     
     net.train()
 
-    return dice_score / max(num_val_batches, 1)
+    return score
     
         
 '''
@@ -109,7 +114,7 @@ gradient_clipping: float = 1.0,
 
 if __name__ == '__main__':
     
-    epochs = 100
+    epochs = 200
 
     net = UNet(n_channels=5,n_classes=7,bilinear=False)
     net = net.to(memory_format=torch.channels_last) # beta
