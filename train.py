@@ -8,7 +8,6 @@ import torch.nn.functional as F
 import numpy as np
 
 
-from tqdm import tqdm
 # from resnet import resnet18
 from unet import UNet
 from custom_dataloader import get_train_test_dataloader
@@ -72,16 +71,17 @@ def eval(epoch):
            # convert to one-hot format
             true_mask = F.one_hot(true_mask, net.n_classes).permute(0,3,1,2).float()
             mask_pred = F.one_hot(mask_pred.argmax(dim=1), net.n_classes).permute(0,3,1,2).float()
-           
-            pred_images = np.argmax(mask_pred, axis=1)
-            for idx,pred_image in enumerate(pred_images): 
-                pred_image = np.array(pred_image,dtype=np.uint8)
+            mask_pred_cpu = mask_pred.cpu()
+            
+            idx = 8
+            if epoch % 10 == 0:
+                pred_images = np.argmax(mask_pred_cpu, axis=1)
+                pred_image = np.array(pred_images[idx],dtype=np.uint8)
                 pred_image = Image.fromarray(pred_image)
                 pred_image.save(f'res/{epoch}_{batch_idx}_{idx}_pred.png')
-           
-            true_images = np.argmax(true_mask, axis=1)
-            for idx,true_image in enumerate(true_images):
-                true_image = np.array(true_image,dtype=np.uint8)
+                true_mask_cpu = true_mask.cpu()
+                true_images = np.argmax(true_mask_cpu, axis=1)
+                true_image = np.array(true_images[idx],dtype=np.uint8)
                 true_image = Image.fromarray(true_image)
                 true_image.save(f'res/{epoch}_{batch_idx}_{idx}_true.png')
            
@@ -109,7 +109,7 @@ gradient_clipping: float = 1.0,
 
 if __name__ == '__main__':
     
-    epochs = 10
+    epochs = 100
 
     net = UNet(n_channels=5,n_classes=7,bilinear=False)
     net = net.to(memory_format=torch.channels_last) # beta
