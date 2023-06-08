@@ -132,8 +132,10 @@ gradient_clipping: float = 1.0,
 if __name__ == '__main__':
     
     epochs = 400
+    water_labeled = True
+    n_classes = 8 if water_labeled else 7
 
-    net = UNet(n_channels=5,n_classes=7,bilinear=False)
+    net = UNet(n_channels=5,n_classes=n_classes,bilinear=False)
     net = net.to(memory_format=torch.channels_last) # beta
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

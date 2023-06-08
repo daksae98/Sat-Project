@@ -1,3 +1,4 @@
+
 from osgeo import gdal
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,7 +9,7 @@ import math
 # DNBR Label, DNBR 영상을 만든다
 # 128 * 128로 나눈다.
 
-REGION = 'Uljin1'
+REGION = 'Anndong'
 
 BANDS = [
     "B2_BLUE",
@@ -70,7 +71,6 @@ def load_images(region):
     prev = []
     post = []
     for path in prev_paths:
-        # print(path)
         img_ds = gdal.Open(path)
         img = img_ds.ReadAsArray()
         img_arr = np.array(img)
@@ -94,6 +94,7 @@ def load_images(region):
     return prev, post
 
 
+
 def cal_dNBR(prev, post, region):
     [_, _, _, prev_nir, prev_swir] = prev
     [_, _, _, post_nir, post_swir] = post
@@ -102,11 +103,11 @@ def cal_dNBR(prev, post, region):
     post_sum = post_nir + post_swir
     post_dif = post_nir - post_swir
 
-    prev_0_idxs = np.argwhere(prev_sum == 0)
+    prev_0_idxs = np.where(prev_sum == 0)
     prev_sum[prev_0_idxs] = 1
     prev_dif[prev_0_idxs] = 0
 
-    post_0_idxs = np.argwhere(post_sum == 0)
+    post_0_idxs = np.where(post_sum == 0)
     post_sum[post_0_idxs] = 1
     post_dif[post_0_idxs] = 0
 
@@ -120,13 +121,25 @@ def cal_dNBR(prev, post, region):
     return dnbr
 
 
-def label_dNBR(region):
+def label_dNBR(region,prev,label_water=False):
+    def find_water(prev):
+        [b_prev, g_prev, r_prev, prev_nir, prev_swir] = prev
+
+        prev_0_idx = np.where(prev_nir == 0)
+        prev_nir[prev_0_idx] = 1
+
+        water = b_prev/prev_nir
+        water_idx = np.where(water > 1.2)
+        water = np.zeros_like(b_prev)
+        water[water_idx] = 1
+        plot_image(water)
+
+        return water_idx
     dNBR_ds = gdal.Open(f'Datasets/{region}/{region}_dNBR.tif')
     dNBR_img = dNBR_ds.ReadAsArray()
     dNBR = np.array(dNBR_img)
 
     dNBR_Label = np.zeros_like(dNBR)  # 결과를 저장할 numpy 배열 초기화
-
     for level in SEVERITY_LEVEL:
         range_min, range_max = SEVERITY_LEVEL[level]['RANGE']
         value = SEVERITY_LEVEL[level]['VALUE']
@@ -138,27 +151,45 @@ def label_dNBR(region):
         else:
             dNBR_Label[(dNBR >= range_min) & (
                 dNBR < range_max)] = value
-    im = Image.fromarray(dNBR_Label)
-    im.save(f'Datasets/{region}/{region}_dNBR_label.tif')
+    
+    # Label Water
+    if label_water:
+        water_idx = find_water(prev)
+        dNBR_Label[water_idx] = 7
+        im = Image.fromarray(dNBR_Label)
+        im.save(f'Datasets/{region}/{region}_dNBR_water_label.tif')
+    else:
+        im = Image.fromarray(dNBR_Label)
+        im.save(f'Datasets/{region}/{region}_dNBR_label.tif')
 
     return dNBR_Label
 
 
-def merge_imgs(region):
-    _, post = load_images(region)
-    dNBR_Label = load_image(f'Datasets/{region}/{region}_dNBR_label.tif')
 
+def merge_imgs(region,label_water=False):
+    _, post = load_images(region)
+    if label_water:
+        dNBR_Label = load_image(f'Datasets/{region}/{region}_dNBR_water_label.tif')
+    else :
+        dNBR_Label = load_image(f'Datasets/{region}/{region}_dNBR_label.tif')
+        
     dNBR_Label_expand = np.expand_dims(dNBR_Label, axis=0)
     res = np.concatenate((post, dNBR_Label_expand), axis=0)
 
-    np.save(f'npys/{region}', res)
+    if label_water:
+        np.save(f'npys/waterLabeled/{region}', res)
+    else:   
+        np.save(f'npys/{region}', res)
 
 # 50 -> 35 train 15 test
 
 
-def crop_128(region):
+def crop_128(region,label_water=False):
     # [B G R NIR SWIR Target]
-    npy = np.load(f'npys/{region}.npy')
+    if label_water:
+        npy = np.load(f'npys/waterLabeled/{region}.npy')
+    else:
+        npy = np.load(f'npys/{region}.npy')
     row, col = npy[0].shape
     ir, ic = math.ceil(row/256), math.ceil(col/256)
 
@@ -198,17 +229,20 @@ def crop_128(region):
             count1 += 1
 
     res = np.array(res)
-    np.save(f'npys/{region}_{res.shape[0]}', res)
+    if label_water:
+        np.save(f'npys/waterLabeled/{region}_{res.shape[0]}', res)
+    else:
+        np.save(f'npys/{region}_{res.shape[0]}', res)
 
 
 if __name__ == '__main__':
-    img = load_image('Datasets/Uljin1/Uljin1_dNBR_label.tif')
-    plot_image(img)
-    # prev, post = load_images(REGION)
-    # cal_dNBR(prev, post, REGION)
-    # label_dNBR(REGION)
-    # merge_imgs(REGION)
-    # crop_128(REGION)
+    # img = load_image('Datasets/Uljin1/Uljin1_dNBR_label.tif')
+    # plot_image(img)
+    prev, post = load_images(REGION)
+    cal_dNBR(prev, post, REGION)
+    label_dNBR(REGION,prev,True)
+    merge_imgs(REGION,True)
+    crop_128(REGION,True)
     '''
     npy = np.load('npys/Donghae_8.npy')
     fig, axs = plt.subplots(4, 2)
