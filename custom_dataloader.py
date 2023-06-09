@@ -2,7 +2,11 @@ import os
 import torch
 from torch.utils.data import Dataset, DataLoader,random_split
 from torchvision import transforms, utils
+import torchvision.transforms.functional as F
 from PIL import Image
+import math
+import random
+
 
 import numpy as np
 
@@ -37,19 +41,32 @@ class ToTensor(object):
     def __call__(self,image):        
         return torch.from_numpy(image)
 
+class RandomRotate(object):
+    def __init__(self,p,max_angle):
+        '''p = 0~1, max_angle : degree(float)'''
+        assert isinstance(p,float),'p should be int'
+        self.p = p
+        assert isinstance(max_angle,float),'angle should be float'
+        self.max_angle = max_angle
+
+    def __call__(self,image):
+        r = random.random()
+        angle = math.ceil(self.max_angle * r)
+        if self.p >= r:
+            image_tensor = torch.from_numpy(image)
+            rotated_tensor = []
+            for channel in image_tensor:
+                rotated_channel = F.rotate(channel.unsqueeze(0), angle)
+                rotated_tensor.append(rotated_channel.squeeze(0))
+                
+            rotated_image = torch.stack(rotated_tensor, dim=0).numpy()
+
+            return rotated_image
+        
+        else:
+            return image
 
 
-
-# transformed_dataset = WildFireDataset(npys,transform=transforms.Compose([
-#     transforms.RandomHorizontalFlip(),
-#     transforms.RandomRotation(15),
-#     transforms.ToTensor(),
-#     # transforms.Normalize()
-# ]))
-
-# dataloader = DataLoader(transformed_dataset, batch_size=16,shuffle=True,num_workers=0)
-
-# print(npys.shape)
 
 
 #(80, 6, 128, 128)
@@ -73,6 +90,7 @@ def get_train_test_dataloader(train_npys,test_npys):
 
     # transform train
     transform_train = WildFireDataset(train_data,transform=transforms.Compose([
+        RandomRotate(p=0.5,max_angle=90.0),
         ToTensor()
     ]))
    

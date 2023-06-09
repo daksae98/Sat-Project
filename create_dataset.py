@@ -9,7 +9,7 @@ import math
 # DNBR Label, DNBR 영상을 만든다
 # 128 * 128로 나눈다.
 
-REGION = 'Anndong'
+REGION = 'Hongsung'
 
 BANDS = [
     "B2_BLUE",
@@ -129,7 +129,7 @@ def label_dNBR(region,prev,label_water=False):
         prev_nir[prev_0_idx] = 1
 
         water = b_prev/prev_nir
-        water_idx = np.where(water > 1.2)
+        water_idx = np.where(water > 1.3)
         water = np.zeros_like(b_prev)
         water[water_idx] = 1
         plot_image(water)
