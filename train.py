@@ -79,7 +79,7 @@ def eval(epoch):
             dice_score += multiclass_dice_coeff(mask_pred[:,1:], true_mask[:,1:], reduce_batch_first=False)
             score = dice_score / max(num_val_batches,1)
             
-            idx = 12
+            idx = 0
             if epoch % 50 == 0:
                 score_cpu = score.cpu()
                 score_cpu = np.array(score_cpu)
@@ -94,19 +94,19 @@ def eval(epoch):
                     for i, pred_image in enumerate(pred_images):
                         pred_image = np.array(pred_image,dtype=np.uint8)
                         pred_image = Image.fromarray(pred_image)
-                        pred_image.save(f'res/{epoch}_{batch_idx}_{i}_pred_{score_round}.png')
+                        pred_image.save(f'res2/{epoch}_{batch_idx}_{i}_pred_{score_round}.png')
                     for i, true_image in enumerate(true_images):
                         true_image = np.array(true_image,dtype=np.uint8)
                         true_image = Image.fromarray(true_image)
-                        true_image.save(f'res/{epoch}_{batch_idx}_{i}_true_{score_round}.png')
+                        true_image.save(f'res2/{epoch}_{batch_idx}_{i}_true_{score_round}.png')
                 else:
                     pred_image = np.array(pred_images[idx],dtype=np.uint8)
                     pred_image = Image.fromarray(pred_image)
-                    pred_image.save(f'res/{epoch}_{batch_idx}_{idx}_pred_{score_round}.png')
+                    pred_image.save(f'res2/{epoch}_{batch_idx}_{idx}_pred_{score_round}.png')
                     
                     true_image = np.array(true_images[idx],dtype=np.uint8)
                     true_image = Image.fromarray(true_image)
-                    true_image.save(f'res/{epoch}_{batch_idx}_{idx}_true_{score_round}.png')
+                    true_image.save(f'res2/{epoch}_{batch_idx}_{idx}_true_{score_round}.png')
            
            
             

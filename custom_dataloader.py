@@ -90,7 +90,7 @@ def get_train_test_dataloader(train_npys,test_npys):
 
     # transform train
     transform_train = WildFireDataset(train_data,transform=transforms.Compose([
-        RandomRotate(p=0.5,max_angle=90.0),
+        # RandomRotate(p=0.5,max_angle=90.0),
         ToTensor()
     ]))
    
