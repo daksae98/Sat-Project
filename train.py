@@ -80,6 +80,7 @@ def eval(epoch):
             score = dice_score / max(num_val_batches,1)
             
             idx = 0
+            
             if epoch % 50 == 0:
                 score_cpu = score.cpu()
                 score_cpu = np.array(score_cpu)
@@ -91,6 +92,7 @@ def eval(epoch):
                 true_images = np.argmax(true_mask_cpu, axis=1)
 
                 if epoch == epochs:
+                    torch.save(net.state_dict(), f'net_checkpoint/unet_{epochs}')
                     for i, pred_image in enumerate(pred_images):
                         pred_image = np.array(pred_image,dtype=np.uint8)
                         pred_image = Image.fromarray(pred_image)

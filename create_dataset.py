@@ -95,9 +95,16 @@ def load_images(region):
 
 
 
+
 def cal_dNBR(prev, post, region):
-    [_, _, _, prev_nir, prev_swir] = prev
-    [_, _, _, post_nir, post_swir] = post
+    '''
+    dNDVI = NDVI_prev - NDVI_post
+    NDVI = (NIR - R)/(NIR + R)
+    '''
+    [_, _, prev_r, prev_nir, prev_swir] = prev
+    [_, _, post_r, post_nir, post_swir] = post
+    
+    # dNBR
     prev_sum = prev_nir + prev_swir
     prev_dif = prev_nir - prev_swir
     post_sum = post_nir + post_swir
@@ -115,15 +122,16 @@ def cal_dNBR(prev, post, region):
     post_nbr = post_dif/post_sum
     dnbr = prev_nbr - post_nbr
 
-    im = Image.fromarray(dnbr)
-    im.save(f'Datasets/{region}/{region}_dNBR.tif')
+    # Save
+    im_dnbr = Image.fromarray(dnbr)
+    im_dnbr.save(f'Datasets/{region}/{region}_dNBR.tif')
 
     return dnbr
 
 
 def label_dNBR(region,prev,label_water=False):
     def find_water(prev):
-        [b_prev, g_prev, r_prev, prev_nir, prev_swir] = prev
+        [b_prev, g_prev, r_prev, prev_nir, prev_r] = prev
 
         prev_0_idx = np.where(prev_nir == 0)
         prev_nir[prev_0_idx] = 1
