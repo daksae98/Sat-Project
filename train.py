@@ -142,7 +142,11 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss() if net.n_classes > 1 else nn.BCEWithLogitsLoss()
     global_step = 0
 
-    for epoch in range(1, epochs + 1):
-        train(epoch)
-        val_score = eval(epoch)
-        print(f'#{epoch} val_score:{val_score}')
+   
+
+
+
+    # for epoch in range(1, epochs + 1):
+    #     train(epoch)
+    #     val_score = eval(epoch)
+    #     print(f'#{epoch} val_score:{val_score}')

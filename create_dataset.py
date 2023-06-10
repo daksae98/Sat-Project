@@ -9,7 +9,7 @@ import math
 # DNBR Label, DNBR 영상을 만든다
 # 128 * 128로 나눈다.
 
-REGION = 'Hongsung'
+REGION = 'Uljin3'
 
 BANDS = [
     "B2_BLUE",
