@@ -1,2 +1,7 @@
 # Sat-Project
- 위성영상처리 Project
+
+Wild Fire Severity Level Classification using UNet
+
+## Reference
+
+https://github.com/milesial/Pytorch-UNet

@@ -28,7 +28,7 @@ plt.show()
 '''
 def test():
     cmap = mpl.colormaps['plasma']  # 'jet' 색상 맵을 사용하며, 8개의 색상으로 구성
-    H = np.load('Hongsung.npy')
+    H = np.load('Uljin1_400.npy')
     print(H.shape)
     for idx,[pred, dNBr, dNDVI] in enumerate(H):
         fig,axs = plt.subplots(1,3)
@@ -40,10 +40,10 @@ def test():
         axs[2].imshow(dNDVI)
         axs[2].set_title('dNDVI')
         correlation = np.corrcoef(pred.flatten(), dNDVI.flatten())
-        cf = confusion_matrix(pred.flatten(), dNBr.flatten())
+        cf = confusion_matrix(pred.flatten(), dNBr.flatten(),labels=range(8))
         print(correlation)
         print(cf)
-        plt.savefig(f'Hongsung_{idx}')
+        plt.savefig(f'Uljin1_{idx}')
         plt.show()
         
 

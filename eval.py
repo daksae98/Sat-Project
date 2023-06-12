@@ -3,19 +3,15 @@ import torch
 import numpy as np
 import os
 from torch.utils.data import Dataset
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 # 훈련시킨 모델을 불러와서, dNBR 계산 결과를 데이터셋별로 하나씩 시도. 
 # 이미지랑 Npy로 저장. [pred, true_dNBR, dNDVI] plot
 
 
-Hongsung = np.load('npys/valid/Hongsung_8.npy')
-Sokcho = np.load('npys/valid/Sokcho_8.npy')
-Uljin = np.load('npys/valid/Uljin1_8.npy')
+Uljin1 = np.load('npys/valid/Uljin1_8.npy')
 
 
-Hongsung_dNDVI = np.load('npys/evaluation/Hongsung_dNDVI_8.npy')
-Sokcho_dNDVI = np.load('npys/evaluation/Sokcho_dNDVI_8.npy')
-Uljin_dNDVI = np.load('npys/evaluation/Uljin1_dNDVI_8.npy')
+Uljin1_dNDVI = np.load('npys/evaluation/Uljin1_dNDVI_8.npy')
 
 
 
@@ -26,14 +22,14 @@ def forward():
     # for batch_idx,(image, true_mask) in enumerate(test_dataloader):
     #     pred = net(image)
     
-    for idx,image in enumerate(Hongsung):
+    for idx,image in enumerate(Uljin1):
         # ToTensor
         image = torch.from_numpy(image)
         
         # Feature, True Mask, dNDVI
         feature = image[:-1].unsqueeze(0)
         true_dNBR = image[-1].detach().numpy()
-        true_dNDVI = Hongsung_dNDVI[idx]
+        true_dNDVI = Uljin1_dNDVI[idx]
         
         # Forward
         pred = net(feature)
@@ -44,12 +40,12 @@ def forward():
 
     # print(stack)
     res = np.array(stack)
-    np.save('Hongsung',res)
+    np.save('Uljin1',res)
     
         
 
 def test():
-    H = np.load('Hongsung.npy')
+    H = np.load('Uljin1.npy')
     print(H.shape)
     for pred, dNBr, dNDVI in H:
         fig,axs = plt.subplot(3,1)
@@ -60,12 +56,12 @@ def test():
 
 
 if __name__ == '__main__':
-    test()
-    '''
+    # test()
+    
     n_classes = 8
     device = 'cpu'
     net = UNet(n_channels=5,n_classes=n_classes,bilinear=False)
-    net.load_state_dict(torch.load('net_checkpoint/unet_400', map_location=device))
+    net.load_state_dict(torch.load('net_checkpoint/unet_300_563', map_location=device))
     
     
     # TRAIN_DIR = 'npys/train/'
@@ -75,4 +71,4 @@ if __name__ == '__main__':
     # train_dataloader, test_dataloader = get_train_test_dataloader(train_npys,test_npys)
     
     forward()
-    '''
+    
